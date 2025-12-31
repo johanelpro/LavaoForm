@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido Lavao - Limpieza de Zapatos</title>
+    
+    <!-- NUEVO: Favicon -->
+    <link rel="icon" type="image/png" href="https://sisplay.co/wp-content/uploads/2025/10/Captura_de_pantalla_2025-10-14_152552-removebg-preview1.png">
+    
+    <!-- Carga de Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Configuración de colores personalizados de Tailwind --><script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand': '#56c2e1',
+                        'brand-dark': '#4aa9c6',
+                        'light-gray': '#f5f5f5',
+                        'input-gray': '#fafafa',
+                        /* NUEVOS COLORES PARA FOCO */
+                        'focus-green': '#25D366',
+                        'focus-yellow': '#F7D00E',
+                        'focus-red': '#EF4444', /* (Rojo de Tailwind) */
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        'xl': '1rem',
+                        '2xl': '1.5rem',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Estilos adicionales para un look limpio --><style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Estilo para los placeholders */
+        ::placeholder {
+            color: #a1a1aa; /* zinc-400 */
+        }
+        
+        /* --- NUEVOS ESTILOS PARA INPUTS --- */
+        
+        /* Contenedor del input */
+        .input-wrapper {
+            /* Mantenemos un borde sutil por defecto */
+            border: 1px solid #e5e7eb; /* gray-200 */
+            /* Transición suave para el ring y el color del icono */
+            transition: box-shadow 0.2s ease-out;
+        }
+
+        /* Icono dentro del input (span) */
+        .input-wrapper span {
+            opacity: 0;
+            transform: scale(0.8) translateX(5px); /* Inicia pequeño y a la derecha */
+            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+            pointer-events: none; /* No bloquear clics en el input */
+        }
+
+        /* Animación de aparición del icono */
+        .input-wrapper:focus-within span {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+        }
+        
+        /* Quitamos el anillo de foco por defecto del input, ya que lo maneja el contenedor */
+        .form-input:focus {
+            outline: none;
+            box-shadow: none;
+            ring-width: 0;
+        }
+
+        /* --- NUEVOS ESTILOS PARA CHECKBOX --- */
+        .custom-checkbox:checked + label span {
+            background-color: #56c2e1; /* brand color */
+            border-color: #56c2e1; /* brand color */
+            /* Checkmark SVG como background-image */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* --- ESTILOS DE CHULITO ELIMINADOS --- */
+        
+        /* --- NUEVOS ESTILOS PARA TRANSICIONES SUAVES --- */
+        #logo-container,
+        #form-wrapper,
+        #loader-container,
+        #success-container { /* Actualizado para incluir success-container */
+            /* Transición suave para opacidad (difuminado) y altura (compactado) */
+            transition: opacity 0.4s ease-in-out, max-height 0.5s ease-in-out, padding 0.5s ease-in-out, margin 0.5s ease-in-out;
+            max-height: 1000px; /* Altura máxima para estado visible */
+            opacity: 1;
+            overflow: hidden; /* Clave para la animación de max-height */
+            /* Se mantiene el padding/margin por defecto (p-8) */
+        }
+
+        /* Clase de estado oculto */
+        .step-hidden {
+            opacity: 0;
+            max-height: 0px !important; /* !important para sobreescribir estilos inline */
+            pointer-events: none;
+            /* Quitamos padding y margin al estar oculto para colapso total */
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+    </style>
+</head>
+<body class="bg-light-gray font-sans">
+
+    <!-- Contenedor principal centrado --><div class="min-h-screen flex flex-col items-center justify-center p-4">
+
+        <!-- 
+            Tarjeta principal del formulario.
+            Añadimos 'transition-all' para la animación de "compactado".
+        --><div id="main-card" class="bg-white rounded-2xl shadow-xl w-full max-w-md transition-all duration-500 ease-in-out">
+            
+            <!-- Área del Logotipo --><div id="logo-container" class="flex justify-center items-center overflow-hidden rounded-t-2xl">
+                 <img src="https://sisplay.co/wp-content/uploads/2025/10/Gemini_Generated_Image_60bdiu60bdiu60bd-1.png" 
+                     alt="Logotipo de Lavao" 
+                     class="w-full h-auto object-cover" 
+                     onerror="this.src='https://placehold.co/1344x768/cccccc/333333?text=Lavao+Logo';">
+            </div>
+            
+            <!-- Contenedor del formulario (Paso 1) --><div id="form-wrapper" class="p-8">
+                
+                <!-- Título --><h2 class="text-3xl font-bold text-center text-gray-800 mb-6">
+                    ¡Haz tu Pedido en Segundos!
+                </h2>
+
+                <!-- Formulario --><form id="pickup-form" class="space-y-4">
+                    
+                    <!-- Campo: Teléfono (WhatsApp) --><div>
+                        <label for="telefono" class="block text-sm font-medium text-gray-700 mb-2">Teléfono (WhatsApp)</label>
+                        <!-- Contenedor de Input (wrapper) --><div class="relative input-wrapper rounded-lg bg-input-gray focus-within:ring-[3px] focus-within:ring-focus-green focus-within:ring-offset-2 focus-within:ring-offset-white">
+                            <input type="tel" id="telefono" name="telefono" 
+                                   class="form-input w-full px-4 py-3 bg-transparent text-gray-900 focus:outline-none pr-12" 
+                                   placeholder="Ej: 300 123 4567" required>
+                            <!-- Icono de WhatsApp --><span class="absolute right-0 top-0 h-full w-12 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-whatsapp h-7 w-7 text-focus-green" viewBox="0 0 16 16">  <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/></svg>
+                            </span>
+                        </div>
+                        <!-- Mensaje de Error (oculto por defecto) --><p id="telefono-error" class="hidden text-red-500 text-sm mt-1">Debe ser un número de 10 dígitos.</p>
+                    </div>
+
+                    <!-- Campo: Nombre Completo --><div>
+                        <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                        <!-- Contenedor de Input (wrapper) --><div class="relative input-wrapper rounded-lg bg-input-gray focus-within:ring-[3px] focus-within:ring-focus-yellow focus-within:ring-offset-2 focus-within:ring-offset-white">
+                            <input type="text" id="nombre" name="nombre" 
+                                   class="form-input w-full px-4 py-3 bg-transparent text-gray-900 focus:outline-none pr-12" 
+                                   placeholder="Tu nombre y apellido" required>
+                            <!-- Icono de Usuario --><span class="absolute right-0 top-0 h-full w-12 flex items-center justify-center">
+                                <svg class="h-7 w-7 text-focus-yellow" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Campo: Dirección de Recogida --><div>
+                        <label for="direccion" class="block text-sm font-medium text-gray-700 mb-2">Dirección de Recogida</label>
+                        <!-- Contenedor de Input (wrapper) --><div class="relative input-wrapper rounded-lg bg-input-gray focus-within:ring-[3px] focus-within:ring-focus-red focus-within:ring-offset-2 focus-within:ring-offset-white">
+                            <input type="text" id="direccion" name="direccion" 
+                                   class="form-input w-full px-4 py-3 bg-transparent text-gray-900 focus:outline-none pr-12" 
+                                   placeholder="Tu dirección completa" required>
+                            <!-- Icono de Ubicación --><span class="absolute right-0 top-0 h-full w-12 flex items-center justify-center">
+                                <svg class="h-7 w-7 text-focus-red" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path></svg>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Campo: Número de Pares --><div class="pb-2">
+                        <label for="pares" class="block text-sm font-medium text-gray-700 mb-2">Nº de Pares</label>
+                        <!-- Contenedor de Input (wrapper) --><div class="relative input-wrapper rounded-lg bg-input-gray focus-within:ring-[3px] focus-within:ring-brand focus-within:ring-offset-2 focus-within:ring-offset-white">
+                            <input type="number" id="pares" name="pares" min="1" 
+                                   class="form-input w-full px-4 py-3 bg-transparent text-gray-900 focus:outline-none" 
+                                   placeholder="¿Cuántos pares envías?" required>
+                        </div>
+                    </div>
+
+                    <!-- NUEVO: Checkbox para Guardar Info --><div class="flex items-center justify-center pt-2">
+                        <input type="checkbox" id="saveInfo" name="saveInfo" class="hidden custom-checkbox">
+                        <label for="saveInfo" class="flex items-center cursor-pointer text-sm text-gray-600">
+                            <span class="w-5 h-5 inline-block mr-2 rounded border-2 border-gray-300 bg-input-gray transition-all duration-200"></span>
+                            ¿Deseas que tu informacion se guarde para futuros pedidos?
+                        </label>
+                    </div>
+
+                    <!-- Botón de Envío --><div class="pt-4">
+                        <button type="submit" 
+                                class="w-full bg-brand text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition-transform hover:scale-105 hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2">
+                            Programar Recogida
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- NUEVO: Contenedor de Carga (Loader) --><div id="loader-container" class="p-8 flex justify-center items-center step-hidden" style="height: 200px;">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand"></div>
+            </div>
+
+            <!-- CONTENEDOR DE CHULITO ELIMINADO --><!-- NUEVO: Contenedor de Éxito Final --><div id="success-container" class="p-8 text-center step-hidden">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">Tu pedido esta en proceso</h2>
+                <p class="text-xl text-gray-600 mb-6">Gracias por confiar en nosotros</p>
+                
+                <!-- **** NUEVO TEXTO AÑADIDO **** -->
+                <div class="text-left text-sm text-gray-600 space-y-3">
+                    <p>
+                        Tu información está completamente protegida con nosotros.
+                    </p>
+                    <p>
+                        El proceso de recogida de tu pedido tomará aproximadamente entre 3 y 4 días hábiles, mientras que el proceso de lavado requerirá cerca de 2 días adicionales. Finalmente, la entrega se realizará en un plazo estimado de 2 a 3 días hábiles.
+                    </p>
+                    <p>
+                        Estos tiempos son aproximados y pueden variar dependiendo de la cantidad de pares de zapatos y la distancia entre nuestra oficina y tu dirección.
+                    </p>
+                    <p class="text-center font-medium pt-2">
+                        Agradecemos tu confianza y comprensión. 🚀
+                    </p>
+                </div>
+                <!-- **** FIN DEL NUEVO TEXTO **** -->
+
+            </div>
+
+            <!-- PIE DE PÁGINA MOVIDO FUERA DE LA TARJETA --><!-- success-container ELIMINADO de aquí --></div>
+        
+        <!-- NUEVO PIE DE PÁGINA (FUERA DE LA TARJETA) -->
+        <footer class="text-center text-sm text-gray-500 pt-4">
+            Lavao&copy; 2025
+        </footer>
+    </div>
+
+    <!-- Script para manejar la validación y transición --><script>
+        // --- Referencias a Elementos ---
+        const form = document.getElementById('pickup-form');
+        const logoContainer = document.getElementById('logo-container');
+        const formWrapper = document.getElementById('form-wrapper');
+        const loaderContainer = document.getElementById('loader-container'); 
+        const successContainer = document.getElementById('success-container'); // NUEVO
+        
+        const telefonoInput = document.getElementById('telefono');
+        const telefonoWrapper = telefonoInput.closest('.input-wrapper');
+        const telefonoError = document.getElementById('telefono-error');
+
+        // --- NUEVAS REFERENCIAS PARA AUTOCOMPLETAR ---
+        const nombreInput = document.getElementById('nombre');
+        const direccionInput = document.getElementById('direccion');
+        const telefonoIconSpan = telefonoWrapper.querySelector('span');
+        const originalTelefonoIcon = telefonoIconSpan.innerHTML; // Guardar el icono original de WhatsApp
+
+        // Definir el icono de carga (spinner)
+        const spinnerIcon = `<svg class="animate-spin h-7 w-7 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>`;
+
+        // --- Helper de Pausa (Sleep) ---
+        // Esto nos permite usar 'await sleep(1000)' para esperar 1 segundo
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // --- Función de Envío (convertida a async) ---
+        async function handleFormSubmit(event) {
+            // 1. Prevenir el envío real del formulario
+            event.preventDefault(); 
+            
+            const telefono = telefonoInput.value;
+            const saveInfo = document.getElementById('saveInfo').checked;
+
+            // --- 2. Validación de Teléfono ---
+            if (!/^\d{10}$/.test(telefono)) {
+                telefonoError.classList.remove('hidden'); 
+                telefonoWrapper.classList.add('ring-[3px]', 'ring-red-500', 'ring-offset-2', 'ring-offset-white');
+                telefonoWrapper.classList.remove('focus-within:ring-focus-green');
+                return; // Detener la ejecución
+            }
+
+            // --- 3. Si la Validación Pasa ---
+            
+            // Ocultar mensaje de error (si estaba visible)
+            telefonoError.classList.add('hidden');
+            telefonoWrapper.classList.remove('ring-[3px]', 'ring-red-500', 'ring-offset-2', 'ring-offset-white');
+            telefonoWrapper.classList.add('focus-within:ring-focus-green');
+
+            // Recopilar datos (para el futuro envío al backend)
+            const formData = {
+                telefono: telefono,
+                nombre: document.getElementById('nombre').value,
+                direccion: document.getElementById('direccion').value,
+                pares: document.getElementById('pares').value,
+                saveInfo: saveInfo
+            };
+            console.log("Pedido a enviar:", formData);
+
+            // --- 4. SECUENCIA DE TRANSICIÓN PROFESIONAL ---
+            
+            // Ocultar logo y formulario
+            logoContainer.classList.add('step-hidden');
+            formWrapper.classList.add('step-hidden');
+
+            // Esperar que la animación de "ocultar" termine (500ms definidos en el CSS)
+            await sleep(500); 
+
+            // 1. Mostrar el loader
+            loaderContainer.classList.remove('step-hidden');
+
+            // 2. Enviar datos al Webhook y simular tiempo de carga
+            const startTime = Date.now();
+            try {
+                const response = await fetch('https://webhook.wipti.com/webhook/d03ee713-fefb-43b8-a964-4c0dfb8d534b', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    // Loguear el error, pero continuar el flujo para el usuario
+                    console.error('Error al enviar al webhook:', response.statusText);
+                } else {
+                    // Éxito
+                    console.log('Datos enviados al webhook con éxito.');
+                }
+
+            } catch (error) {
+                // Loguear el error de red, pero continuar el flujo
+                console.error('Error de red al enviar al webhook:', error);
+            }
+            
+            // Asegurar que el loader se muestre al menos 1.5 segundos
+            const elapsedTime = Date.now() - startTime;
+            const remainingTime = 1500 - elapsedTime;
+            if (remainingTime > 0) {
+                await sleep(remainingTime);
+            }
+
+            // 3. Ocultar el loader
+            loaderContainer.classList.add('step-hidden');
+
+            // Esperar que la animación de "ocultar" termine
+            await sleep(500);
+
+            // 4. Mostrar el mensaje de éxito
+            successContainer.classList.remove('step-hidden');
+        }
+
+        // --- NUEVA FUNCIÓN: Verificar Cliente Existente (Autocompletar) ---
+        async function checkCustomerExists() {
+            const telefono = telefonoInput.value;
+
+            // 1. Validar que sean 10 dígitos para buscar
+            if (!/^\d{10}$/.test(telefono)) {
+                // No buscar si no es un número válido.
+                // La validación de error (rojo) se maneja al intentar enviar.
+                return; 
+            }
+
+            // 2. Mostrar spinner de carga en el input de teléfono
+            telefonoIconSpan.innerHTML = spinnerIcon;
+            telefonoWrapper.classList.remove('focus-within:ring-focus-green');
+            telefonoWrapper.classList.add('focus-within:ring-brand'); // Usar color 'brand' para indicar carga
+
+            try {
+                // 3. Enviar el teléfono al webhook de BÚSQUEDA
+                const response = await fetch('https://webhook.wipti.com/webhook/6e3ad1cd-d0d0-4fdd-983c-836c537e1d20', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telefono: telefono })
+                });
+
+                if (!response.ok) {
+                    console.error('Error en webhook de búsqueda:', response.statusText);
+                    return; // Salir si el webhook falla
+                }
+
+                const data = await response.json();
+
+                // 4. Rellenar datos si el cliente existe
+                // AVISO: Tu webhook debe responder con este formato JSON:
+                // Si existe: { "exists": true, "nombre": "Nombre Cliente", "direccion": "Direccion Cliente" }
+                // Si NO existe: { "exists": false }
+                
+                if (data && data.exists === true) {
+                    // Rellenar los campos del formulario
+                    nombreInput.value = data.nombre || '';
+                    direccionInput.value = data.direccion || '';
+                    
+                    // Opcional: Mover el foco al siguiente campo
+                    document.getElementById('pares').focus();
+                } else {
+                    // Cliente no encontrado, mover foco al nombre para que lo llene
+                    console.log("Cliente no encontrado. El usuario debe llenar los datos.");
+                    nombreInput.focus();
+                }
+
+            } catch (error) {
+                console.error('Error de red al buscar cliente:', error);
+            } finally {
+                // 5. Restaurar el icono original de WhatsApp
+                telefonoIconSpan.innerHTML = originalTelefonoIcon;
+                // Restaurar color de foco original
+                telefonoWrapper.classList.remove('focus-within:ring-brand');
+                telefonoWrapper.classList.add('focus-within:ring-focus-green');
+            }
+        }
+
+        // --- Listener del Formulario ---
+        form.addEventListener('submit', handleFormSubmit);
+
+        // --- NUEVO LISTENER: 'blur' para autocompletar ---
+        // Se activa cuando el usuario saca el foco (hace clic fuera) del campo de teléfono
+        telefonoInput.addEventListener('blur', checkCustomerExists);
+
+        // --- Listener para limpiar el error de teléfono ---
+        // Quita el error rojo en cuanto el usuario empieza a corregir
+        telefonoInput.addEventListener('input', () => {
+            if (telefonoError.classList.contains('hidden')) return; 
+            
+            telefonoError.classList.add('hidden');
+            telefonoWrapper.classList.remove('ring-[3px]', 'ring-red-500', 'ring-offset-2', 'ring-offset-white');
+            telefonoWrapper.classList.add('focus-within:ring-focus-green');
+        });
+    </script>
+
+</body>
+</html>
